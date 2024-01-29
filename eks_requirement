@@ -1,0 +1,92 @@
+# requirements for EKS
+
+Step 1---- vpc creation requirements
+#must have a minimum of 2-4 subnets in different AZS, 2 PUBLIC AND 2 PRIVATE
+#The VPC Must be tagged
+step2---- subnet creation requirements
+A. tags = {
+  Name = "public"
+  "kubernetes.io/role/elb" = "1"
+  "kubernetes.io/cluster/clustername = "owned" or "share"
+B. Vpc needs DNS hostname support
+   default=true
+C. Vpc needs DNS RESOLUTION 
+    default=true
+STEP 3 ---- CLUSTER IAM ROLES
+#EKS is a service in aws so it needs to make API calls to other services in aws, so our eks needs roles with amazonEKSCluster policy attached
+   A. ASSUME_ROLE_POLICY FOR THE PRINCIPAL
+      #it has to be eks.amazon.aws.com
+      #the role for the principal is in_line that is it has to be passed and can't be called
+  assume_role_policy = <<POLICY
+  {
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "eks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+  B. ATTACHED POLICIES TO THE ROLE ABOVE
+      # For the clusterplane 2 other policies are needed to be attached to the assumed roles
+      # The must be Amazon managed policy and not customed policy
+      1. AmazonEKSCluster_policy
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/AmazonEKSClusterpolicy"
+         role       = aws_iam_role.<name of the cluster.name>
+     }
+     2. AmazonEKSCluster_policy
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/AmazonEKSServicepolicy"
+         role       = aws_iam_role.<name of the cluster.name>
+      }
+  C. NODE GROUPS
+   A. ASSUME_ROLE_POLICY FOR THE PRINCIPAL
+      #it has to be eks.amazon.aws.com
+      #the role for the principal is in_line that is it has to be passed and can't be called
+  assume_role_policy = <<POLICY
+  {
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+  B. ATTACHED POLICIES TO THE ROLE ABOVE
+      # For the clusterplane 2 other policies are needed to be attached to the assumed roles
+      # The must be Amazon managed policy and not customed policy
+      1. AmazonEKSworkernodepolicy
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/AmazonEC2workernodepolicy"
+         role       = aws_iam_role.<name of the Node.name>
+    }
+      2. AmazonEKS_CNI_policy
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/AmazonEC2_CNI_policy"
+         role       = aws_iam_role.<name of the Node.name>
+     }
+     3. AmazonEC2containerRegistryReadOnly
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/AmazonEC2containerRegistryReadOnly"
+         role       = aws_iam_role.<name of the cluster.name>
+      }
+      4. AmazonEC2FullAccess 
+        resource "aws_iam_role_policy_attachment" "<put the name of the cluster>_AmazonEKSClusterPolicy" {
+         policy_arn = "arn:aws:iam_policy/ AmazonEC2FullAccess"
+         role       = aws_iam_role.<name of the cluster.name>
+      }
+  D. the credentials used to provision the Eks are the authorised credentials to modify or edit the configmap.
+     they are located at
+           aws-auth cm
+      # this credentials own the cluster so can be use to modify the cluster like add users etc
