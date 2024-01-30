@@ -1,0 +1,2 @@
+locals {
+eks_policies = {
