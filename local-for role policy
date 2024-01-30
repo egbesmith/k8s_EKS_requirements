@@ -1,2 +1,6 @@
 locals {
 eks_policies = {
+   "arn:aws:iam_policy/AmazonEKSClusterpolicy"
+   "arn:aws:iam_policy/AmazonEKSServicepolicy"
+]
+node_policies = {
