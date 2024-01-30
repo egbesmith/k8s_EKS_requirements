@@ -1,0 +1,27 @@
+#create node group in the created vpc using created node role
+resource "aws_eks_node_group" "private-nodes" {
+  "clusterName": "your-eks-cluster-name"
+  "nodegroupName": "your-nodegroup-name"
+  "node_role_arn = <you can call a data source in your terraform file>
+  
+  "subnets": ["subnet-xxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyy"]
+  
+  "instanceTypes": ["t3.medium"]
+   capacity_type = "on_demand"
+   
+  "scalingConfig": {
+    "minSize": 1,
+    "maxSize": 3,
+    "desiredSize": 2
+  },
+
+  update_config {
+    max_unavailable = 1 
+  "amiType": "AL2_x86_64",
+  "remoteAccess": {
+    "ec2SshKey": "your-ec2-key-pair-name"
+  }
+}
+} 
+"nodeRole": "arn:aws:iam::your-account-id:role/EKSNodeRole"
+}
