@@ -1,6 +1,36 @@
 locals {
-eks_policies = {
+eks_policies = [
    "arn:aws:iam_policy/AmazonEKSClusterpolicy"
    "arn:aws:iam_policy/AmazonEKSServicepolicy"
 ]
-node_policies = {
+node_policies = [
+    "arn:aws:iam_policy/AmazonEC2workernodepolicy"
+    "arn:aws:iam_policy/AmazonEC2_CNI_policy"
+    "arn:aws:iam_policy/AmazonEC2containerRegistryReadOnly"
+    "arn:aws:iam_policy/ AmazonEC2FullAccess"
+]
+}
+#role and policies for node groups
+resource "aws_iam_role" "nodes" {
+  name            ="eks-node-group-nodes"
+  assume_role_policy = dat.aws._iam_policy_document.nodes.json # this is a data you are calling
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEC2workernodepolicy" {
+  for_each  = toset (local.node_policies)
+  policy_arn = each.value
+  role       = aws_iam_role.<name>.name
+}
+
+#role and policies for eks cluster
+resource "aws_iam_role" "nodes" {
+  name            ="eks-cluster<clustername>"
+  assume_role_policy = dat.aws._iam_policy_document.eks_assume_role.json  # this is a data you are calling
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEKSClusterpolicy" {
+  for_each   = toset (local.eks_policies)
+  policy_arn = each.value
+  role       = aws_iam_role.<name>.name
+}
+
